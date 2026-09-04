@@ -1,0 +1,269 @@
+#!/usr/bin/env python3
+"""
+BSOD Prank — Fullscreen Blue Screen of Death simulator
+Safe to run — just a visual prank, no system changes
+"""
+
+import tkinter as tk
+from tkinter import font
+import ctypes
+import random
+import threading
+import time
+
+# ============================================================
+# BSOD SIMULATOR
+# ============================================================
+
+class BSODPrank:
+    def __init__(self):
+        self.error_codes = [
+            "CRITICAL_PROCESS_DIED",
+            "SYSTEM_SERVICE_EXCEPTION",
+            "MEMORY_MANAGEMENT",
+            "PAGE_FAULT_IN_NONPAGED_AREA",
+            "IRQL_NOT_LESS_OR_EQUAL",
+            "KERNEL_SECURITY_CHECK_FAILURE",
+            "DPC_WATCHDOG_VIOLATION",
+            "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+            "UNEXPECTED_KERNEL_MODE_TRAP",
+            "ATTEMPTED_WRITE_TO_READONLY_MEMORY",
+            "BAD_SYSTEM_CONFIG_INFO",
+            "DRIVER_IRQL_NOT_LESS_OR_EQUAL"
+        ]
+        
+        self.stop_code = random.choice(self.error_codes)
+        self.progress = 0
+        
+    def setup(self):
+        # Create fullscreen window
+        self.root = tk.Tk()
+        self.root.attributes('-fullscreen', True)
+        self.root.attributes('-topmost', True)
+        self.root.configure(background='#0066cc')  # Classic BSOD blue
+        self.root.overrideredirect(True)
+        
+        # Block shortcuts
+        self.root.bind('<Control-Alt-Delete>', lambda e: 'break')
+        self.root.bind('<Alt-F4>', lambda e: 'break')
+        self.root.bind('<Escape>', lambda e: 'break')
+        self.root.protocol("WM_DELETE_WINDOW", lambda: None)
+        
+        # Get screen size
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Main frame with padding
+        frame = tk.Frame(self.root, bg='#0066cc')
+        frame.pack(expand=True, padx=50, pady=50)
+        
+        # Sad face
+        sad_font = font.Font(family='Segoe UI', size=80, weight='bold')
+        sad = tk.Label(
+            frame,
+            text="😢",
+            font=sad_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        sad.pack(pady=10)
+        
+        # Main error message
+        error_font = font.Font(family='Segoe UI', size=32, weight='bold')
+        error = tk.Label(
+            frame,
+            text="Your PC ran into a problem and needs to restart.",
+            font=error_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        error.pack(pady=10)
+        
+        # Sub message
+        sub_font = font.Font(family='Segoe UI', size=16)
+        sub = tk.Label(
+            frame,
+            text="We're just collecting some error info, and then we'll restart for you.",
+            font=sub_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        sub.pack(pady=5)
+        
+        # Stop code
+        code_font = font.Font(family='Consolas', size=14)
+        code_label = tk.Label(
+            frame,
+            text=f"STOP CODE: {self.stop_code}",
+            font=code_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        code_label.pack(pady=20)
+        
+        # Progress bar label
+        self.progress_label = tk.Label(
+            frame,
+            text=f"Progress: 0%",
+            font=('Consolas', 14),
+            fg='white',
+            bg='#0066cc'
+        )
+        self.progress_label.pack(pady=10)
+        
+        # Progress bar (ASCII style)
+        self.progress_bar = tk.Label(
+            frame,
+            text="[                    ]",
+            font=('Consolas', 14),
+            fg='white',
+            bg='#0066cc'
+        )
+        self.progress_bar.pack(pady=5)
+        
+        # Memory dump info
+        dump_font = font.Font(family='Consolas', size=12)
+        dump = tk.Label(
+            frame,
+            text=f"Physical memory dump: {random.randint(10, 99)}% complete",
+            font=dump_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        dump.pack(pady=20)
+        
+        # Contact info
+        contact_font = font.Font(family='Segoe UI', size=12)
+        contact = tk.Label(
+            frame,
+            text="Contact your system admin or support person for help.",
+            font=contact_font,
+            fg='white',
+            bg='#0066cc'
+        )
+        contact.pack(pady=5)
+        
+        # Hidden exit instructions
+        exit_font = font.Font(family='Consolas', size=10)
+        exit_label = tk.Label(
+            frame,
+            text="[Press Ctrl+Shift+Esc to exit]",
+            font=exit_font,
+            fg='#0066cc',  # Hidden in plain sight
+            bg='#0066cc'
+        )
+        exit_label.pack(pady=30)
+        
+        # Start progress animation
+        self.update_progress()
+        
+        self.root.mainloop()
+    
+    def update_progress(self):
+        """Animate the progress bar"""
+        if self.progress <= 100:
+            # Update progress text
+            self.progress_label.config(text=f"Progress: {self.progress}%")
+            
+            # Update ASCII bar
+            filled = self.progress // 5
+            bar = "[" + "█" * filled + " " * (20 - filled) + "]"
+            self.progress_bar.config(text=bar)
+            
+            self.progress += 1
+            self.root.after(100, self.update_progress)
+        else:
+            # Loop the progress
+            self.progress = 0
+            self.root.after(500, self.update_progress)
+
+# ============================================================
+# EVEN MORE REALISTIC VERSION (with fake boot loop)
+# ============================================================
+
+class BSODWithBootLoop(BSODPrank):
+    def __init__(self):
+        super().__init__()
+        self.phase = 0  # 0=BSOD, 1=boot screen, 2=BSOD again
+        
+    def setup(self):
+        # Same as above but with phase switching
+        super().setup()
+        
+    def update_progress(self):
+        """Animated with fake restart"""
+        if self.phase == 0:
+            # BSOD progress
+            if self.progress <= 100:
+                self.progress_label.config(text=f"Progress: {self.progress}%")
+                filled = self.progress // 5
+                bar = "[" + "█" * filled + " " * (20 - filled) + "]"
+                self.progress_bar.config(text=bar)
+                self.progress += 1
+                self.root.after(80, self.update_progress)
+            else:
+                # Switch to "restart"
+                self.phase = 1
+                self.progress = 0
+                self.root.configure(background='black')
+                # Change all labels to black
+                for widget in self.root.winfo_children():
+                    for child in widget.winfo_children():
+                        if isinstance(child, tk.Label):
+                            child.config(bg='black', fg='white')
+                self.progress_label.config(text="Restarting...")
+                self.progress_bar.config(text="")
+                self.root.after(2000, self.update_progress)
+        
+        elif self.phase == 1:
+            # Fake Windows boot screen
+            self.root.configure(background='black')
+            self.progress_label.config(text="Windows is loading...", fg='white')
+            if self.progress <= 100:
+                filled = self.progress // 5
+                bar = "[" + "█" * filled + " " * (20 - filled) + "]"
+                self.progress_bar.config(text=bar, fg='white')
+                self.progress += 1
+                self.root.after(80, self.update_progress)
+            else:
+                # Back to BSOD
+                self.phase = 2
+                self.progress = 0
+                self.root.configure(background='#0066cc')
+                for widget in self.root.winfo_children():
+                    for child in widget.winfo_children():
+                        if isinstance(child, tk.Label):
+                            child.config(bg='#0066cc', fg='white')
+                self.progress_label.config(text="Progress: 0%")
+                self.root.after(1000, self.update_progress)
+        
+        else:
+            # BSOD again
+            super().update_progress()
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+    # Hide console
+    try:
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+    except:
+        pass
+    
+    print("="*60)
+    print("🖥️  BSOD SIMULATOR — Just a prank!")
+    print("="*60)
+    print("📌 This does NOT actually crash your PC")
+    print("📌 Press Ctrl+Shift+Esc to exit")
+    print("📌 Or just restart your computer")
+    print("="*60)
+    
+    # Choose version:
+    # app = BSODPrank()           # Simple BSOD
+    app = BSODWithBootLoop()       # BSOD → Boot → BSOD loop
+    app.setup()
+
+if __name__ == '__main__':
+    main()
